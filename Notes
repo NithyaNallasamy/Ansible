@@ -1,0 +1,125 @@
+# this file contains the notes for ansible to create passwordless authentication.
+
+step1 : installing Ansible on EC2 instance
+
+-- create two ec2 instances using AWS console.name them like below
+  1.ansible
+  2.target
+
+-- commands used to install ansible on EC2 instance
+sudo apt update
+sudo apt install ansible
+
+-- to check ansible installed or not
+ansible --version
+
+step2 : create a file named inventory which will will have the ip address of the target servers.
+
+vim inventory
+paste the ip addresses of the target servers and save the file.
+#to group the servers use below syntax
+example:
+
+[webservers]
+ip
+ip
+
+[dbservers]
+ip
+ip
+
+step3 : create passwordless authentication method
+
+# generate publickey in both servers using below command
+
+ssh-keygen
+
+ssh folder will be created in the following locating/home/ubuntu/.ssh. This folder will have the following folders.
+
+authorized_keys  
+id_ed25519  
+id_ed25519.pub  
+known_hosts  
+known_hosts.old
+
+1. copy the pub key id_ed25519.pub from ansible server and paste it in the authorized_keys of the target server.
+
+cat id_ed25519.pub
+copy the details
+go to target server
+home/ubuntu/.ssh
+vim authorized_keys
+paste the publickey details from the above step.
+
+2. once it is done we can do ssh to target server from the main server which is ansible and perform the actions we want.follow the below to create an file on the target server.
+
+#we have ansible adhoc commands and also aansible plabook.
+ansible adhoc --> when there is less numbers of commands.
+ansible playbook --> when there is multiple number of commands.
+
+3. create an file on the target server
+
+ansible -i inventory all -m "shell" -a "touch testfile1"
+
+-i - inventory 
+all - on which servers the action needs to be performed.if we want to perform the actions on specifi servers then we can group them and mention the group name.like below.
+
+[webservers]
+ip
+ip
+
+[dbservers]
+ip
+ip
+ansible -i inventory webservers -m "shell" -a "touch testfile1"
+
+## internally ansible uses the python language.
+## ansible playbooks are written yaml fromat wit the file extension .yml
+
+*** https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html --> Yaml systa reference
+
+4. steps to write an ansible playbook.
+
+example: install and start nginx
+
+vim first-playbook.yml
+
+##indicates it is a yaml file
+---  
+- name: Install and start nginx
+  hosts: all
+  become: true
+
+  tasks:
+   - name: Install nginx
+     apt:
+       name: nginx
+       state: present
+   - name: start nginx
+     service:
+      name: nginx
+      state: started
+
+
+save the file :wq 
+
+to execute the ansible palybook.
+
+ansible-playbook -i inventory first-playbook.yml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
